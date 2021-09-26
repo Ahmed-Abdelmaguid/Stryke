@@ -27,7 +27,7 @@ exports.register = (req, res) => {
   console.log(req.body);
   const { name, email, password } = req.body;
   User.findOne({ email }).exec((err, user) => {
-    if (user) {
+    if (user !== null) {
       return res
         .status(400)
         .json({ error: "User with this email already exists" });
@@ -82,13 +82,29 @@ exports.register = (req, res) => {
 };
 
 exports.verify = (req, res) => {
-  const { email } = req.body;
-  const verfCode = req.b;
+  const { email, code } = req.body;
   User.findOne({ email }).exec((err, user) => {
-    if (!user.status) {
+    if (user == null) {
+      console.log("1");
       return res.status(401).send({
-        message: "Pending Account. Please Verify Your Email!",
+        message: "Create an Account. Email and password do not exist",
+      });
+    }
+    if (user.code !== code) {
+      console.log("2");
+      return res.status(401).send({
+        message: "Code doesnt not match the code sent to you.",
       });
     }
   });
+  const query = { email: req.body.email };
+  // Set some fields in that document
+  const update = {
+    $set: {
+      status: true,
+    },
+  };
+  const options = { upsert: false };
+  console.log("3");
+  User.updateOne(query, update, options).exec();
 };
